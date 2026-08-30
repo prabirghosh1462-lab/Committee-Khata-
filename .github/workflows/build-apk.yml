@@ -1,4 +1,4 @@
-name: Build APK Simple
+name: Build Android APK
 
 on:
   push:
@@ -10,25 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Build Webview APK
-        uses: GearS3/Webview-App-Action@v1.2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          app-name: 'Committee Khata'
-          package-name: 'committee.khata'
-          website-url: ''
-          path-to-html: '.'
+          node-version: '20'
+
+      - name: Create Webview Project & Build APK
+        run: |
+          npm install -g @capacitor/cli
+          npm init -y
+          npm install @capacitor/core @capacitor/android
+          npx cap init "Committee Khata" "committee.khata" --web-dir .
+          npx cap add android
+          if [ -f google-services.json ]; then
+            cp google-services.json android/app/
+          fi
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: committee-khata-apk
-          path: '**/*.apk'
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
