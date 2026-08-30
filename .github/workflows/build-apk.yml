@@ -11,30 +11,43 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
-      - name: Install Cordova and Build APK
+      - name: Install Bubblewrap and Build APK
         run: |
+          npm install -g @bubblewrap/cli
+          yes | bubblewrap init --manifest=https://localhost/manifest.json || true
+          
+      - name: Build Web App Bundle
+        run: |
+          mkdir -p android-app
+          cd android-app
+          npm init -y
           npm install -g cordova
-          cordova create myApp com.committee.khata "Committee Khata"
-          cd myApp
+          cordova create app com.committee.khata "CommitteeKhata"
+          cd app
           rm -rf www/*
-          cp -r ../* www/ 2>/dev/null || true
-          rm -rf www/myApp
-          cordova platform add android
-          if [ -f ../google-services.json ]; then
-            cp ../google-services.json platforms/android/app/
+          cp -r ../../* www/ 2>/dev/null || true
+          cordova platform add android@12.0.0
+          if [ -f ../../google-services.json ]; then
+            cp ../../google-services.json platforms/android/app/
           fi
-          cordova build android --nogradle
+          cordova build android --device
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: committee-khata-apk
-          path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android-app/app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
           
