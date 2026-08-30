@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Web-to-APK
 
 on:
   push:
@@ -13,41 +13,35 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Install Bubblewrap and Build APK
+      - name: Create Webview Android Project
         run: |
-          npm install -g @bubblewrap/cli
-          yes | bubblewrap init --manifest=https://localhost/manifest.json || true
-          
-      - name: Build Web App Bundle
-        run: |
-          mkdir -p android-app
-          cd android-app
+          npm install -g capacitor-cli
+          mkdir -p android-build
+          cd android-build
           npm init -y
-          npm install -g cordova
-          cordova create app com.committee.khata "CommitteeKhata"
-          cd app
-          rm -rf www/*
-          cp -r ../../* www/ 2>/dev/null || true
-          cordova platform add android@12.0.0
-          if [ -f ../../google-services.json ]; then
-            cp ../../google-services.json platforms/android/app/
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Committee Khata" "committee.khata" --web-dir www
+          mkdir -p www
+          cp -r ../* www/ 2>/dev/null || true
+          npx cap add android
+          if [ -f ../google-services.json ]; then
+            cp ../google-services.json android/app/
           fi
-          cordova build android --device
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: committee-khata-apk
-          path: android-app/app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
-          
+          path: android-build/android/app/build/outputs/apk/debug/app-debug.apk
