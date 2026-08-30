@@ -32,4 +32,3 @@ jobs:
         with:
           name: committee-khata-apk
           path: '**/*.apk'
-          
