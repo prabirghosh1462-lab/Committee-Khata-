@@ -14,7 +14,6 @@
   --night:#2b1250;
   --maroon:#8c1c3f;
   --marigold:#f5a623;
-  --gold:#d4af37;
   --cream:#fdf8f0;
   --ink:#2a1441;
   --good:#1f8a4c;
@@ -57,10 +56,10 @@ input:focus,select:focus{outline:none;border-color:var(--marigold);box-shadow:0 
   <div class="login-wrap">
     <div class="login-title">শ্রী শ্রী মহা চক্র রাস পূজা কমিটি</div>
     <div class="login-card">
-      <h2 style="text-align:center;margin-top:0;">কমিটি লগইন</h2>
+      <h2 style="text-align:center;margin-top:0;">কমিটি প্রবেশদ্বার</h2>
       <input type="text" id="loginUsername" placeholder="ইউজারনেম বা মোবাইল নম্বর">
       <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড">
-      <button class="login-btn" id="loginBtn">লগইন করুন</button>
+      <button class="login-btn" id="loginBtn">প্রবেশ করুন</button>
       <div id="loginError" style="color:red; text-align:center; margin-top:8px; font-weight:bold;"></div>
     </div>
   </div>
@@ -74,35 +73,45 @@ input:focus,select:focus{outline:none;border-color:var(--marigold);box-shadow:0 
       <button id="logoutBtn" style="background:#c62828; color:#fff; border:0; padding:6px 12px; border-radius:8px; cursor:pointer;">লগআউট</button>
     </div>
     <div class="title">শ্রী শ্রী মহা চক্র রাস পূজা কমিটি</div>
-    <div class="sub">ক্যাশ ও ক্লাউড সিস্টেম</div>
+    <div class="sub">অনলাইন ক্যাশ ও কালেকশন বুক</div>
   </header>
 
   <div class="container">
-    <h3>নতুন হিসেব যুক্ত করুন</h3>
+    <h3>নতুন লেনদেন যোগ করুন</h3>
     <form id="ledgerForm">
-      <input type="text" id="memberName" placeholder="সদস্য/দাতার নাম" required>
+      <input type="text" id="memberName" placeholder="সদস্য/দাতার নাম (বাধ্যতামূলক)" required>
       <input type="number" id="amount" placeholder="টাকার পরিমাণ (৳)" required>
       <select id="type">
         <option value="জমা">জমা (Income)</option>
         <option value="খরচ">খরচ (Expense)</option>
       </select>
-      <input type="text" id="note" placeholder="বিবরণ / বিবরণী">
+      <input type="text" id="note" placeholder="বিবরণ / নোট">
       <button type="submit" class="primary">ডাটাবেসে সেভ করুন</button>
     </form>
 
     <hr style="margin:25px 0; border:0; border-top:1px solid #ddd;">
 
-    <h3>অনলাইন হিসেব তালিকা (সব ফোনে সিঙ্ক হবে)</h3>
+    <h3>অনলাইন হিসেব তালিকা (সব ফোনে লাইভ সিঙ্ক)</h3>
     <div id="ledgerList">
       <p style="text-align: center; color: #777;">ডাটা লোড হচ্ছে...</p>
     </div>
   </div>
 </div>
 
-<!-- Firebase SDK -->
+<!-- Firebase Modular SDK & App Logic -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    deleteDoc, 
+    doc, 
+    onSnapshot, 
+    query, 
+    orderBy, 
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC5n7tqHqaJRIX5vM-pRdlJeCfsTMEg",
@@ -126,17 +135,16 @@ input:focus,select:focus{outline:none;border-color:var(--marigold);box-shadow:0 
   const ledgerForm = document.getElementById("ledgerForm");
   const ledgerList = document.getElementById("ledgerList");
 
-  // লগইন হ্যান্ডলার
   loginBtn.addEventListener("click", () => {
-    const user = document.getElementById("loginUsername").value;
-    const pass = document.getElementById("loginPassword").value;
+    const user = document.getElementById("loginUsername").value.trim();
+    const pass = document.getElementById("loginPassword").value.trim();
 
     if (user !== "" && pass !== "") {
       loginScreen.style.display = "none";
       mainApp.style.display = "block";
       loadFirestoreData();
     } else {
-      loginError.innerText = "ইউজারনেম এবং পাসওয়ার্ড লিখুন!";
+      loginError.innerText = "ইউজারনেম এবং পাসওয়ার্ড পূরণ করুন!";
     }
   });
 
@@ -145,13 +153,12 @@ input:focus,select:focus{outline:none;border-color:var(--marigold);box-shadow:0 
     loginScreen.style.display = "flex";
   });
 
-  // ডাটা যোগ করা
   ledgerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const name = document.getElementById("memberName").value;
+    const name = document.getElementById("memberName").value.trim();
     const amount = Number(document.getElementById("amount").value);
     const type = document.getElementById("type").value;
-    const note = document.getElementById("note").value;
+    const note = document.getElementById("note").value.trim();
 
     try {
       await addDoc(collection(db, "transactions"), {
@@ -163,18 +170,17 @@ input:focus,select:focus{outline:none;border-color:var(--marigold);box-shadow:0 
       });
       ledgerForm.reset();
     } catch (err) {
-      alert("ডাটা সেভ হতে সমস্যা হয়েছে!");
+      alert("ডাটা সেভ করতে সমস্যা হয়েছে! ইন্টারনেট কানেকশন চেক করুন।");
     }
   });
 
-  // রিয়েলটাইম ডাটা লোড
   function loadFirestoreData() {
     const q = query(collection(db, "transactions"), orderBy("timestamp", "desc"));
     
     onSnapshot(q, (snapshot) => {
       ledgerList.innerHTML = "";
       if (snapshot.empty) {
-        ledgerList.innerHTML = "<p style='text-align:center;'>কোনো তথ্য পাওয়া যায়নি।</p>";
+        ledgerList.innerHTML = "<p style='text-align:center;'>কোনো জমা-খরচের হিসেব পাওয়া যায়নি।</p>";
         return;
       }
 
@@ -201,9 +207,8 @@ input:focus,select:focus{outline:none;border-color:var(--marigold);box-shadow:0 
     });
   }
 
-  // ডাটা মুছে ফেলার ফাংশন
   window.deleteTransaction = async (id) => {
-    if (confirm("আপনি কি এটি মুছে ফেলতে চান?")) {
+    if (confirm("আপনি কি এই এনট্রিটি মুছে ফেলতে চান?")) {
       await deleteDoc(doc(db, "transactions", id));
     }
   };
